@@ -43,7 +43,6 @@ namespace API.Controllers
             };
         }
 
-
         [HttpGet("emailexists")]
         public async Task<ActionResult<bool>> CheckEmailExistsAsync([FromQuery] string email)
         {
@@ -63,7 +62,7 @@ namespace API.Controllers
         [HttpPut("address")]
         public async Task<ActionResult<AddressDto>> UpdateUserAddress(AddressDto address)
         {
-            var user = await _userManager.FindByEmailFromClaimPrincipalAsync(HttpContext?.User);
+            var user = await _userManager.FindUserByClaimsPrincipalWithAddressAsync(HttpContext?.User);
 
             user.Address = _mapper.Map<AddressDto, Address>(address);
 
@@ -100,6 +99,14 @@ namespace API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
+            var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+
+            if (existingUser != null)
+                return new BadRequestObjectResult(new ApiValidationErrorResponse
+                {
+                    Errors = new[] { "Email address is in use" }
+                });
+
             var user = new AppUser
             {
                 DisplayName = registerDto.DisplayName,
