@@ -1,9 +1,10 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { of, ReplaySubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { IAddress } from '../shared/models/address';
 import { IUser } from '../shared/models/user';
 
 @Injectable({
@@ -15,21 +16,17 @@ export class AccountService {
   currentUser$ = this.currentUserSource.asObservable();
   private tokenKey = "token";
 
-
   constructor(private http: HttpClient,
     private router: Router) { }
 
-
-  loadCurrentUser(token: string) {
+  loadCurrentUser() {
+    const token = localStorage.getItem(this.tokenKey);
     if (token === null) {
       this.currentUserSource.next(null);
       return of(null);
     }
 
-    let headers = new HttpHeaders()
-      .set("Authorization", "Bearer " + token);
-
-    return this.http.get(this.baseUrl + "account", { headers: headers })
+    return this.http.get(this.baseUrl + "account")
       .pipe(
         map((user: IUser) => {
           if (user) {
@@ -73,5 +70,13 @@ export class AccountService {
 
   checkEmailExists(email: string) {
     return this.http.get(this.baseUrl + "account/emailexists?email=" + email);
+  }
+
+  getUserAddress() {
+    return this.http.get<IAddress>(this.baseUrl + "account/address")
+  }
+
+  updateUserAddress(address: IAddress) {
+    return this.http.put<IAddress>(this.baseUrl + "account/address", address);
   }
 }
